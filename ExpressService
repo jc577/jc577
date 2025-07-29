@@ -1,0 +1,1216 @@
+import java.util.*;
+import java.time.LocalDateTime;
+
+enum TipoUsuario {
+    CLIENTE,
+    PROFESIONAL
+}
+
+public class ExpressService {
+    public static void main(String[] args) {
+        SistemaContratacion sistema = new SistemaContratacion();
+        sistema.iniciar();
+    }
+}
+
+class SistemaContratacion {
+    private List<Usuario> usuarios;
+    private List<Servicio> servicios;
+    private List<Contrato> contratos;
+    private Usuario usuarioActual;
+    private Scanner scanner;
+
+    public SistemaContratacion() {
+        this.usuarios = new ArrayList<>();
+        this.servicios = new ArrayList<>();
+        this.contratos = new ArrayList<>();
+        this.scanner = new Scanner(System.in);
+        
+        // Datos de prueba
+        usuarios.add(new Usuario("cliente1", "pass1", TipoUsuario.CLIENTE, "cliente@example.com", "123456789"));
+        usuarios.add(new Usuario("prof1", "pass1", TipoUsuario.PROFESIONAL, "prof1@example.com", "987654321"));
+    }
+
+    public void iniciar() {
+        while (true) {
+            if (usuarioActual == null) {
+                mostrarMenuPrincipal();
+            } else {
+                switch (usuarioActual.getTipo()) {
+                    case CLIENTE:
+                        mostrarMenuCliente();
+                        break;
+                    case PROFESIONAL:
+                        mostrarMenuProfesional();
+                        break;
+                }
+            }
+        }
+    }
+
+    private void mostrarMenuPrincipal() {
+        System.out.println("\n=== MENÚ PRINCIPAL ===");
+        System.out.println("1. Iniciar sesión");
+        System.out.println("2. Registrarse");
+        System.out.println("3. Salir");
+        System.out.print("Seleccione una opción: ");
+
+        int opcion = scanner.nextInt();
+        scanner.nextLine();
+
+        switch (opcion) {
+            case 1:
+                iniciarSesion();
+                break;
+            case 2:
+                registrarUsuario();
+                break;
+            case 3:
+                System.exit(0);
+                break;
+            default:
+                System.out.println("Opción no válida");
+        }
+    }
+
+    private void mostrarMenuCliente() {
+        System.out.println("\n=== MENÚ CLIENTE ===");
+        System.out.println("1. Buscar servicios");
+        System.out.println("2. Postularse a servicio");
+        System.out.println("3. Ver mis postulaciones");
+        System.out.println("4. Ver historial de servicios");
+        System.out.println("5. Calificar profesional");
+        System.out.println("6. Chatear");
+        System.out.println("7. Configurar perfil");
+        System.out.println("8. Reportar usuario");
+        System.out.println("9. Cerrar sesión");
+        System.out.print("Seleccione una opción: ");
+
+        int opcion = scanner.nextInt();
+        scanner.nextLine();
+
+        switch (opcion) {
+            case 1:
+                buscarServicios();
+                break;
+            case 2:
+                postularseServicio();
+                break;
+            case 3:
+                verMisPostulaciones();
+                break;
+            case 4:
+                verHistorialCliente();
+                break;
+            case 5:
+                calificarProfesional();
+                break;
+            case 6:
+                iniciarChat();
+                break;
+            case 7:
+                configurarPerfil();
+                break;
+            case 8:
+                reportarUsuario();
+                break;
+            case 9:
+                usuarioActual = null;
+                System.out.println("Sesión cerrada exitosamente");
+                break;
+            default:
+                System.out.println("Opción no válida");
+        }
+    }
+
+    private void mostrarMenuProfesional() {
+        System.out.println("\n=== MENÚ PROFESIONAL ===");
+        System.out.println("1. Publicar servicio");
+        System.out.println("2. Ver mis servicios");
+        System.out.println("3. Ver postulaciones");
+        System.out.println("4. Completar servicio");
+        System.out.println("5. Ver historial de servicios");
+        System.out.println("6. Calificar cliente");
+        System.out.println("7. Chatear");
+        System.out.println("8. Configurar perfil");
+        System.out.println("9. Reportar usuario");
+        System.out.println("10. Cerrar sesión");
+        System.out.print("Seleccione una opción: ");
+
+        int opcion = scanner.nextInt();
+        scanner.nextLine();
+
+        switch (opcion) {
+            case 1:
+                publicarServicio();
+                break;
+            case 2:
+                verMisServicios();
+                break;
+            case 3:
+                verPostulacionesAMisServicios();
+                break;
+            case 4:
+                completarServicio();
+                break;
+            case 5:
+                verHistorialProfesional();
+                break;
+            case 6:
+                calificarCliente();
+                break;
+            case 7:
+                iniciarChat();
+                break;
+            case 8:
+                configurarPerfil();
+                break;
+            case 9:
+                reportarUsuario();
+                break;
+            case 10:
+                usuarioActual = null;
+                System.out.println("Sesión cerrada exitosamente");
+                break;
+            default:
+                System.out.println("Opción no válida");
+        }
+    }
+
+    private void completarServicio() {
+        if (usuarioActual.getTipo() != TipoUsuario.PROFESIONAL) {
+            System.out.println("Error: Solo los profesionales pueden completar servicios");
+            return;
+        }
+        
+        System.out.println("\n=== COMPLETAR SERVICIO ===");
+        System.out.println("Tus servicios en progreso:");
+        
+        boolean tieneContratos = false;
+        for (Contrato contrato : contratos) {
+            if (contrato.getProfesional().equals(usuarioActual) && 
+                contrato.getEstado().equals("En progreso")) {
+                
+                tieneContratos = true;
+                System.out.println("\nID: " + contrato.getServicio().getId());
+                System.out.println("Servicio: " + contrato.getServicio().getTitulo());
+                System.out.println("Cliente: " + contrato.getCliente().getUsername());
+                System.out.println("Precio acordado: $" + contrato.getPrecioAcordado());
+                System.out.println("Fecha inicio: " + contrato.getFechaInicio());
+                System.out.println("------------------------");
+            }
+        }
+        
+        if (!tieneContratos) {
+            System.out.println("No tienes servicios en progreso.");
+            return;
+        }
+        
+        System.out.print("ID del servicio a completar: ");
+        int idServicio = scanner.nextInt();
+        scanner.nextLine();
+        
+        Contrato contrato = buscarContratoPorServicioProfesional(idServicio);
+        if (contrato == null) {
+            System.out.println("Servicio no encontrado o no está en progreso") ;
+            return;
+        }
+        
+        System.out.print("¿Seguro que deseas marcar este servicio como completado? (s/n): ");
+        String confirmacion = scanner.nextLine();
+        
+        if (confirmacion.equalsIgnoreCase("s")) {
+            contrato.finalizarContrato();
+            System.out.println("Servicio marcado como completado. Ahora puedes calificar al cliente.");
+        } else {
+            System.out.println("Operación cancelada");
+        }
+    }
+
+    private void registrarUsuario() {
+        System.out.println("\n=== REGISTRO DE USUARIO ===");
+        System.out.print("Nombre de usuario: ");
+        String username = scanner.nextLine();
+        
+        System.out.print("Contraseña: ");
+        String password = scanner.nextLine();
+        
+        TipoUsuario tipo = null;
+        while (tipo == null) {
+            System.out.print("Tipo de usuario (1-Cliente / 2-Profesional): ");
+            int tipoOp = scanner.nextInt();
+            scanner.nextLine();
+            
+            switch (tipoOp) {
+                case 1:
+                    tipo = TipoUsuario.CLIENTE;
+                    break;
+                case 2:
+                    tipo = TipoUsuario.PROFESIONAL;
+                    break;
+                default:
+                    System.out.println("Opción no válida. Intente nuevamente.");
+            }
+        }
+        
+        System.out.print("Email: ");
+        String email = scanner.nextLine();
+        
+        System.out.print("Teléfono: ");
+        String telefono = scanner.nextLine();
+        
+        Usuario nuevoUsuario = new Usuario(username, password, tipo, email, telefono);
+        usuarios.add(nuevoUsuario);
+        System.out.println("Usuario registrado con éxito como " + tipo.toString().toLowerCase() + "!");
+    }
+
+    private void iniciarSesion() {
+        System.out.println("\n=== INICIO DE SESIÓN ===");
+        System.out.print("Nombre de usuario: ");
+        String username = scanner.nextLine();
+        
+        System.out.print("Contraseña: ");
+        String password = scanner.nextLine();
+        
+        for (Usuario usuario : usuarios) {
+            if (usuario.getUsername().equals(username) && usuario.getPassword().equals(password)) {
+                usuarioActual = usuario;
+                System.out.println("Inicio de sesión exitoso como " + usuario.getTipo().toString().toLowerCase() + "!");
+                return;
+            }
+        }
+        System.out.println("Usuario o contraseña incorrectos");
+    }
+
+    private void publicarServicio() {
+        if (usuarioActual.getTipo() != TipoUsuario.PROFESIONAL) {
+            System.out.println("Error: Solo los profesionales pueden publicar servicios");
+            return;
+        }
+        
+        System.out.println("\n=== PUBLICAR SERVICIO ===");
+        System.out.print("Título del servicio: ");
+        String titulo = scanner.nextLine();
+        
+        System.out.print("Descripción: ");
+        String descripcion = scanner.nextLine();
+        
+        System.out.print("Categoría: ");
+        String categoria = scanner.nextLine();
+        
+        System.out.print("Tarifa por hora ($): ");
+        double tarifa = scanner.nextDouble();
+        scanner.nextLine();
+        
+        Servicio servicio = new Servicio(titulo, descripcion, categoria, tarifa, usuarioActual);
+        servicios.add(servicio);
+        System.out.println("Servicio publicado con éxito!");
+    }
+
+    private void buscarServicios() {
+        System.out.println("\n=== BUSCAR SERVICIOS ===");
+        System.out.print("Buscar por categoría (dejar vacío para todos): ");
+        String categoria = scanner.nextLine();
+        
+        System.out.println("\nServicios disponibles:");
+        for (Servicio servicio : servicios) {
+            if (categoria.isEmpty() || servicio.getCategoria().equalsIgnoreCase(categoria)) {
+                System.out.println("ID: " + servicio.getId());
+                System.out.println("Título: " + servicio.getTitulo());
+                System.out.println("Descripción: " + servicio.getDescripcion());
+                System.out.println("Categoría: " + servicio.getCategoria());
+                System.out.println("Tarifa por hora: $" + servicio.getTarifaHora());
+                System.out.println("Profesional: " + servicio.getProfesional().getUsername());
+                System.out.println("Calificación promedio: " + servicio.getProfesional().getCalificacionPromedio());
+                System.out.println("------------------------");
+            }
+        }
+    }
+
+    private void postularseServicio() {
+        if (usuarioActual.getTipo() != TipoUsuario.CLIENTE) {
+            System.out.println("Error: Solo los clientes pueden postularse a servicios");
+            return;
+        }
+        
+        System.out.println("\n=== POSTULARSE A SERVICIO ===");
+        buscarServicios();
+        
+        System.out.print("ID del servicio al que desea postularse: ");
+        int idServicio = scanner.nextInt();
+        scanner.nextLine();
+        
+        Servicio servicio = buscarServicioPorId(idServicio);
+        if (servicio == null) {
+            System.out.println("Servicio no encontrado");
+            return;
+        }
+        
+        if (servicio.getProfesional().equals(usuarioActual)) {
+            System.out.println("No puedes postularte a tus propios servicios");
+            return;
+        }
+        
+        System.out.print("Descripción de su necesidad: ");
+        String mensaje = scanner.nextLine();
+        
+        System.out.print("Horas estimadas necesarias: ");
+        int horas = scanner.nextInt();
+        scanner.nextLine();
+        
+        Postulacion postulacion = new Postulacion(usuarioActual, servicio, mensaje, horas);
+        servicio.agregarPostulacion(postulacion);
+        
+        Contrato contrato = new Contrato(servicio, usuarioActual, servicio.getProfesional(), servicio.getTarifaHora() * horas);
+        contratos.add(contrato);
+        
+        System.out.println("Postulación enviada con éxito! Se ha creado un contrato.");
+    }
+
+    private Servicio buscarServicioPorId(int id) {
+        for (Servicio servicio : servicios) {
+            if (servicio.getId() == id) {
+                return servicio;
+            }
+        }
+        return null;
+    }
+
+    private void verMisPostulaciones() {
+        System.out.println("\n=== MIS POSTULACIONES ===");
+        boolean tienePostulaciones = false;
+        
+        for (Servicio servicio : servicios) {
+            for (Postulacion postulacion : servicio.getPostulaciones()) {
+                if (postulacion.getCliente().equals(usuarioActual)) {
+                    tienePostulaciones = true;
+                    System.out.println("ID Servicio: " + servicio.getId());
+                    System.out.println("Título: " + servicio.getTitulo());
+                    System.out.println("Profesional: " + servicio.getProfesional().getUsername());
+                    System.out.println("Horas estimadas: " + postulacion.getHorasEstimadas());
+                    System.out.println("Estado: " + postulacion.getEstado());
+                    System.out.println("Fecha: " + postulacion.getFecha());
+                    
+                    Contrato contrato = buscarContrato(servicio, usuarioActual);
+                    if (contrato != null) {
+                        System.out.println("Estado del contrato: " + contrato.getEstado());
+                    }
+                    
+                    System.out.println("------------------------");
+                }
+            }
+        }
+        
+        if (!tienePostulaciones) {
+            System.out.println("No tienes postulaciones activas.");
+        }
+    }
+
+    private void verHistorialCliente() {
+        System.out.println("\n=== HISTORIAL DE SERVICIOS ===");
+        boolean tieneContratos = false;
+        double totalGastado = 0;
+        int serviciosCompletados = 0;
+        
+        System.out.println("Servicios completados:");
+        for (Contrato contrato : contratos) {
+            if (contrato.getCliente().equals(usuarioActual)) {
+                tieneContratos = true;
+                
+                if (contrato.getEstado().equals("Completado")) {
+                    serviciosCompletados++;
+                    totalGastado += contrato.getPrecioAcordado();
+                    
+                    System.out.println("\nID: " + contrato.getServicio().getId());
+                    System.out.println("Título: " + contrato.getServicio().getTitulo());
+                    System.out.println("Profesional: " + contrato.getProfesional().getUsername());
+                    System.out.println("Precio pagado: $" + contrato.getPrecioAcordado());
+                    System.out.println("Fecha: " + contrato.getFechaFin());
+                    
+                    if (contrato.getCalificacionProfesional() > 0) {
+                        System.out.println("Tu calificación al profesional: " + contrato.getCalificacionProfesional() + "/5");
+                        System.out.println("Tu comentario: " + contrato.getComentarioProfesional());
+                    } else {
+                        System.out.println("(No has calificado a este profesional)");
+                    }
+                    
+                    if (contrato.getCalificacionCliente() > 0) {
+                        System.out.println("Calificación del profesional a ti: " + contrato.getCalificacionCliente() + "/5");
+                        System.out.println("Comentario del profesional: " + contrato.getComentarioCliente());
+                    }
+                    
+                    System.out.println("------------------------");
+                }
+            }
+        }
+        
+        if (!tieneContratos) {
+            System.out.println("No tienes servicios en tu historial.");
+            return;
+        }
+        
+        System.out.println("\n=== RESUMEN ===");
+        System.out.println("Servicios completados: " + serviciosCompletados);
+        System.out.println("Total gastado: $" + totalGastado);
+        
+        System.out.println("\nServicios en progreso:");
+        boolean tieneEnProgreso = false;
+        
+        for (Contrato contrato : contratos) {
+            if (contrato.getCliente().equals(usuarioActual) && 
+                contrato.getEstado().equals("En progreso")) {
+                
+                tieneEnProgreso = true;
+                System.out.println("\nID: " + contrato.getServicio().getId());
+                System.out.println("Título: " + contrato.getServicio().getTitulo());
+                System.out.println("Profesional: " + contrato.getProfesional().getUsername());
+                System.out.println("Precio acordado: $" + contrato.getPrecioAcordado());
+                System.out.println("Fecha inicio: " + contrato.getFechaInicio());
+                System.out.println("------------------------");
+            }
+        }
+        
+        if (!tieneEnProgreso) {
+            System.out.println("No tienes servicios en progreso.");
+        }
+    }
+
+    private void calificarProfesional() {
+        if (usuarioActual.getTipo() != TipoUsuario.CLIENTE) {
+            System.out.println("Error: Solo los clientes pueden calificar profesionales");
+            return;
+        }
+        
+        System.out.println("\n=== CALIFICAR PROFESIONAL ===");
+        
+        System.out.println("Contratos completados:");
+        for (Contrato contrato : contratos) {
+            if (contrato.getEstado().equals("Completado") && 
+                contrato.getCliente().equals(usuarioActual)) {
+                System.out.println("ID: " + contrato.getServicio().getId());
+                System.out.println("Servicio: " + contrato.getServicio().getTitulo());
+                System.out.println("Profesional: " + contrato.getProfesional().getUsername());
+                System.out.println("Fecha: " + contrato.getFechaFin());
+                System.out.println("Calificación actual: " + 
+                    (contrato.getCalificacionProfesional() > 0 ? 
+                     contrato.getCalificacionProfesional() + "/5" : "No calificado"));
+                System.out.println("------------------------");
+            }
+        }
+        
+        System.out.print("ID del servicio a calificar: ");
+        int idServicio = scanner.nextInt();
+        scanner.nextLine();
+        
+        Contrato contrato = buscarContratoPorServicioCliente(idServicio);
+        if (contrato == null) {
+            System.out.println("Servicio no encontrado en tu historial");
+            return;
+        }
+        
+        if (!contrato.getEstado().equals("Completado")) {
+            System.out.println("Solo puedes calificar servicios completados");
+            return;
+        }
+        
+        if (contrato.getCalificacionProfesional() > 0) {
+            System.out.println("Ya calificaste a este profesional para este servicio");
+            return;
+        }
+        
+        System.out.print("Calificación para el profesional (1-5): ");
+        int calificacion = scanner.nextInt();
+        scanner.nextLine();
+        
+        if (calificacion < 1 || calificacion > 5) {
+            System.out.println("La calificación debe estar entre 1 y 5");
+            return;
+        }
+        
+        System.out.print("Comentario sobre el profesional: ");
+        String comentario = scanner.nextLine();
+        
+        contrato.setCalificacionProfesional(calificacion);
+        contrato.setComentarioProfesional(comentario);
+        
+        actualizarCalificacionProfesional(contrato.getProfesional());
+        
+        System.out.println("Calificación al profesional registrada con éxito!");
+    }
+
+    private void actualizarCalificacionProfesional(Usuario profesional) {
+        int totalCalificaciones = 0;
+        int cantidad = 0;
+        
+        for (Contrato contrato : contratos) {
+            if (contrato.getProfesional().equals(profesional) && 
+                contrato.getEstado().equals("Completado") && 
+                contrato.getCalificacionProfesional() > 0) {
+                
+                totalCalificaciones += contrato.getCalificacionProfesional();
+                cantidad++;
+            }
+        }
+        
+        if (cantidad > 0) {
+            profesional.setCalificacionPromedio((double) totalCalificaciones / cantidad);
+        }
+    }
+
+    private Contrato buscarContratoPorServicioCliente(int idServicio) {
+        for (Contrato contrato : contratos) {
+            if (contrato.getServicio().getId() == idServicio && 
+                contrato.getCliente().equals(usuarioActual)) {
+                return contrato;
+            }
+        }
+        return null;
+    }
+
+    private void verHistorialProfesional() {
+        if (usuarioActual.getTipo() != TipoUsuario.PROFESIONAL) {
+            System.out.println("Error: Solo los profesionales pueden ver este historial");
+            return;
+        }
+        
+        System.out.println("\n=== HISTORIAL DE SERVICIOS ===");
+        System.out.println("Servicios completados:");
+        
+        boolean tieneServicios = false;
+        double ingresosTotales = 0;
+        int serviciosCompletados = 0;
+        double promedioCalificaciones = 0;
+        int totalCalificaciones = 0;
+        
+        for (Contrato contrato : contratos) {
+            if (contrato.getProfesional().equals(usuarioActual) && 
+                contrato.getEstado().equals("Completado")) {
+                
+                tieneServicios = true;
+                serviciosCompletados++;
+                ingresosTotales += contrato.getPrecioAcordado();
+                
+                System.out.println("\nID: " + contrato.getServicio().getId());
+                System.out.println("Título: " + contrato.getServicio().getTitulo());
+                System.out.println("Cliente: " + contrato.getCliente().getUsername());
+                System.out.println("Fecha: " + contrato.getFechaFin());
+                System.out.println("Precio: $" + contrato.getPrecioAcordado());
+                
+                if (contrato.getCalificacionProfesional() > 0) {
+                    totalCalificaciones += contrato.getCalificacionProfesional();
+                    System.out.println("Calificación del cliente: " + contrato.getCalificacionProfesional() + "/5");
+                    System.out.println("Comentario del cliente: " + contrato.getComentarioProfesional());
+                } else {
+                    System.out.println("Calificación del cliente: Pendiente");
+                }
+                
+                if (contrato.getCalificacionCliente() > 0) {
+                    System.out.println("Tu calificación al cliente: " + contrato.getCalificacionCliente() + "/5");
+                    System.out.println("Tu comentario: " + contrato.getComentarioCliente());
+                }
+                
+                System.out.println("------------------------");
+            }
+        }
+        
+        if (!tieneServicios) {
+            System.out.println("No tienes servicios completados en tu historial.");
+            return;
+        }
+        
+        promedioCalificaciones = serviciosCompletados > 0 ? (double) totalCalificaciones / serviciosCompletados : 0;
+        
+        System.out.println("\n=== ESTADÍSTICAS ===");
+        System.out.println("Servicios completados: " + serviciosCompletados);
+        System.out.println("Ingresos totales: $" + ingresosTotales);
+        System.out.println("Calificación promedio: " + String.format("%.1f", promedioCalificaciones) + "/5");
+        
+        System.out.println("\nServicios en progreso:");
+        boolean tieneActivos = false;
+        
+        for (Contrato contrato : contratos) {
+            if (contrato.getProfesional().equals(usuarioActual) && 
+                contrato.getEstado().equals("En progreso")) {
+                
+                tieneActivos = true;
+                System.out.println("\nID: " + contrato.getServicio().getId());
+                System.out.println("Título: " + contrato.getServicio().getTitulo());
+                System.out.println("Cliente: " + contrato.getCliente().getUsername());
+                System.out.println("Fecha inicio: " + contrato.getFechaInicio());
+                System.out.println("Precio acordado: $" + contrato.getPrecioAcordado());
+                System.out.println("------------------------");
+            }
+        }
+        
+        if (!tieneActivos) {
+            System.out.println("No tienes servicios activos en este momento.");
+        }
+    }
+
+    private void calificarCliente() {
+        if (usuarioActual.getTipo() != TipoUsuario.PROFESIONAL) {
+            System.out.println("Error: Solo los profesionales pueden calificar clientes");
+            return;
+        }
+        
+        System.out.println("\n=== CALIFICAR CLIENTE ===");
+        
+        System.out.println("Contratos completados:");
+        for (Contrato contrato : contratos) {
+            if (contrato.getEstado().equals("Completado") && 
+                contrato.getProfesional().equals(usuarioActual)) {
+                System.out.println("ID: " + contrato.getServicio().getId());
+                System.out.println("Servicio: " + contrato.getServicio().getTitulo());
+                System.out.println("Cliente: " + contrato.getCliente().getUsername());
+                System.out.println("Fecha: " + contrato.getFechaFin());
+                System.out.println("Calificación actual: " + 
+                    (contrato.getCalificacionCliente() > 0 ? 
+                     contrato.getCalificacionCliente() + "/5" : "No calificado"));
+                System.out.println("------------------------");
+            }
+        }
+        
+        System.out.print("ID del servicio a calificar: ");
+        int idServicio = scanner.nextInt();
+        scanner.nextLine();
+        
+        Contrato contrato = buscarContratoPorServicioProfesional(idServicio);
+        if (contrato == null) {
+            System.out.println("Servicio no encontrado en tu historial");
+            return;
+        }
+        
+        if (!contrato.getEstado().equals("Completado")) {
+            System.out.println("Solo puedes calificar servicios completados");
+            return;
+        }
+        
+        if (contrato.getCalificacionCliente() > 0) {
+            System.out.println("Ya calificaste a este cliente para este servicio");
+            return;
+        }
+        
+        System.out.print("Calificación para el cliente (1-5): ");
+        int calificacion = scanner.nextInt();
+        scanner.nextLine();
+        
+        if (calificacion < 1 || calificacion > 5) {
+            System.out.println("La calificación debe estar entre 1 y 5");
+            return;
+        }
+        
+        System.out.print("Comentario sobre el cliente: ");
+        String comentario = scanner.nextLine();
+        
+        contrato.setCalificacionCliente(calificacion);
+        contrato.setComentarioCliente(comentario);
+        
+        actualizarCalificacionCliente(contrato.getCliente());
+        
+        System.out.println("Calificación al cliente registrada con éxito!");
+    }
+
+    private void actualizarCalificacionCliente(Usuario cliente) {
+        int totalCalificaciones = 0;
+        int cantidad = 0;
+        
+        for (Contrato contrato : contratos) {
+            if (contrato.getCliente().equals(cliente) && 
+                contrato.getEstado().equals("Completado") && 
+                contrato.getCalificacionCliente() > 0) {
+                
+                totalCalificaciones += contrato.getCalificacionCliente();
+                cantidad++;
+            }
+        }
+        
+        if (cantidad > 0) {
+            cliente.setCalificacionPromedio((double) totalCalificaciones / cantidad);
+        }
+    }
+
+    private Contrato buscarContratoPorServicioProfesional(int idServicio) {
+        for (Contrato contrato : contratos) {
+            if (contrato.getServicio().getId() == idServicio && 
+                contrato.getProfesional().equals(usuarioActual)) {
+                return contrato;
+            }
+        }
+        return null;
+    }
+
+    private Contrato buscarContrato(Servicio servicio, Usuario cliente) {
+        for (Contrato contrato : contratos) {
+            if (contrato.getServicio().equals(servicio) && 
+                contrato.getCliente().equals(cliente)) {
+                return contrato;
+            }
+        }
+        return null;
+    }
+
+    private void verMisServicios() {
+        if (usuarioActual.getTipo() != TipoUsuario.PROFESIONAL) {
+            System.out.println("Error: Solo los profesionales pueden ver sus servicios");
+            return;
+        }
+        
+        System.out.println("\n=== MIS SERVICIOS ===");
+        boolean tieneServicios = false;
+        
+        for (Servicio servicio : servicios) {
+            if (servicio.getProfesional().equals(usuarioActual)) {
+                tieneServicios = true;
+                System.out.println("ID: " + servicio.getId());
+                System.out.println("Título: " + servicio.getTitulo());
+                System.out.println("Categoría: " + servicio.getCategoria());
+                System.out.println("Tarifa por hora: $" + servicio.getTarifaHora());
+                System.out.println("Postulaciones: " + servicio.getPostulaciones().size());
+                System.out.println("Estado: " + (servicio.isCerrado() ? "Cerrado" : "Activo"));
+                System.out.println("------------------------");
+            }
+        }
+        
+        if (!tieneServicios) {
+            System.out.println("No has publicado ningún servicio.");
+        }
+    }
+
+    private void verPostulacionesAMisServicios() {
+        if (usuarioActual.getTipo() != TipoUsuario.PROFESIONAL) {
+            System.out.println("Error: Solo los profesionales pueden ver postulaciones");
+            return;
+        }
+        
+        System.out.println("\n=== POSTULACIONES A MIS SERVICIOS ===");
+        boolean tienePostulaciones = false;
+        
+        for (Servicio servicio : servicios) {
+            if (servicio.getProfesional().equals(usuarioActual)) {
+                for (Postulacion postulacion : servicio.getPostulaciones()) {
+                    tienePostulaciones = true;
+                    System.out.println("ID Servicio: " + servicio.getId());
+                    System.out.println("Título: " + servicio.getTitulo());
+                    System.out.println("Cliente: " + postulacion.getCliente().getUsername());
+                    System.out.println("Calificación cliente: " + postulacion.getCliente().getCalificacionPromedio());
+                    System.out.println("Horas estimadas: " + postulacion.getHorasEstimadas());
+                    System.out.println("Mensaje: " + postulacion.getMensaje());
+                    System.out.println("Estado: " + postulacion.getEstado());
+                    
+                    Contrato contrato = buscarContrato(servicio, postulacion.getCliente());
+                    if (contrato != null) {
+                        System.out.println("Estado del contrato: " + contrato.getEstado());
+                    }
+                    
+                    System.out.println("------------------------");
+                }
+            }
+        }
+        
+        if (!tienePostulaciones) {
+            System.out.println("No hay postulaciones a tus servicios.");
+        }
+    }
+
+    private void iniciarChat() {
+        System.out.println("\n=== CHAT ===");
+        System.out.print("Nombre de usuario con quien chatear: ");
+        String username = scanner.nextLine();
+        
+        Usuario otroUsuario = null;
+        for (Usuario usuario : usuarios) {
+            if (usuario.getUsername().equals(username)) {
+                otroUsuario = usuario;
+                break;
+            }
+        }
+        
+        if (otroUsuario == null) {
+            System.out.println("Usuario no encontrado");
+            return;
+        }
+        
+        System.out.println("\nConversación con " + otroUsuario.getUsername() + " (" + otroUsuario.getTipo().toString() + ")");
+        System.out.println("Escribe 'salir' para terminar el chat");
+        
+        while (true) {
+            System.out.print(usuarioActual.getUsername() + ": ");
+            String mensaje = scanner.nextLine();
+            
+            if (mensaje.equalsIgnoreCase("salir")) {
+                break;
+            }
+            
+            System.out.println(otroUsuario.getUsername() + ": [Respuesta simulada]");
+        }
+    }
+
+    private void configurarPerfil() {
+        System.out.println("\n=== CONFIGURAR PERFIL ===");
+        System.out.println("1. Cambiar email");
+        System.out.println("2. Cambiar teléfono");
+        System.out.println("3. Cambiar contraseña");
+        
+        if (usuarioActual.getTipo() == TipoUsuario.PROFESIONAL) {
+            System.out.println("4. Gestionar habilidades");
+        }
+        
+        System.out.print("Seleccione una opción: ");
+        
+        int opcion = scanner.nextInt();
+        scanner.nextLine();
+        
+        switch (opcion) {
+            case 1:
+                System.out.print("Nuevo email: ");
+                String nuevoEmail = scanner.nextLine();
+                usuarioActual.setEmail(nuevoEmail);
+                System.out.println("Email actualizado");
+                break;
+            case 2:
+                System.out.print("Nuevo teléfono: ");
+                String nuevoTelefono = scanner.nextLine();
+                usuarioActual.setTelefono(nuevoTelefono);
+                System.out.println("Teléfono actualizado");
+                break;
+            case 3:
+                System.out.print("Contraseña actual: ");
+                String passActual = scanner.nextLine();
+                if (!passActual.equals(usuarioActual.getPassword())) {
+                    System.out.println("Contraseña incorrecta");
+                    return;
+                }
+                System.out.print("Nueva contraseña: ");
+                String nuevaPass = scanner.nextLine();
+                usuarioActual.setPassword(nuevaPass);
+                System.out.println("Contraseña actualizada");
+                break;
+            case 4:
+                if (usuarioActual.getTipo() == TipoUsuario.PROFESIONAL) {
+                    gestionarHabilidades();
+                } else {
+                    System.out.println("Opción no válida");
+                }
+                break;
+            default:
+                System.out.println("Opción no válida");
+        }
+    }
+
+    private void gestionarHabilidades() {
+        System.out.println("\n=== GESTIONAR HABILIDADES ===");
+        System.out.println("1. Agregar habilidad");
+        System.out.println("2. Ver mis habilidades");
+        System.out.println("3. Eliminar habilidad");
+        System.out.print("Seleccione una opción: ");
+        
+        int opcion = scanner.nextInt();
+        scanner.nextLine();
+        
+        switch (opcion) {
+            case 1:
+                System.out.print("Nueva habilidad: ");
+                String habilidad = scanner.nextLine();
+                usuarioActual.agregarHabilidad(habilidad);
+                System.out.println("Habilidad agregada");
+                break;
+            case 2:
+                System.out.println("\nMis habilidades:");
+                for (String h : usuarioActual.getHabilidades()) {
+                    System.out.println("- " + h);
+                }
+                break;
+            case 3:
+                System.out.print("Habilidad a eliminar: ");
+                String habilidadEliminar = scanner.nextLine();
+                if (usuarioActual.getHabilidades().remove(habilidadEliminar)) {
+                    System.out.println("Habilidad eliminada");
+                } else {
+                    System.out.println("La habilidad no existe");
+                }
+                break;
+            default:
+                System.out.println("Opción no válida");
+        }
+    }
+
+    private void reportarUsuario() {
+        System.out.println("\n=== REPORTAR USUARIO ===");
+        System.out.print("Nombre de usuario a reportar: ");
+        String username = scanner.nextLine();
+        
+        if (username.equals(usuarioActual.getUsername())) {
+            System.out.println("No puedes reportarte a ti mismo");
+            return;
+        }
+        
+        Usuario usuarioReportado = null;
+        for (Usuario usuario : usuarios) {
+            if (usuario.getUsername().equals(username)) {
+                usuarioReportado = usuario;
+                break;
+            }
+        }
+        
+        if (usuarioReportado == null) {
+            System.out.println("Usuario no encontrado");
+            return;
+        }
+        
+        System.out.print("Motivo del reporte: ");
+        String motivo = scanner.nextLine();
+        
+        System.out.print("Descripción: ");
+        String descripcion = scanner.nextLine();
+        
+        System.out.println("\nUsuario reportado con éxito. Los administradores revisarán el caso.");
+        System.out.println("Usuario reportado: " + usuarioReportado.getUsername());
+        System.out.println("Motivo: " + motivo);
+        System.out.println("Descripción: " + descripcion);
+    }
+}
+
+class Usuario {
+    private static int nextId = 1;
+    private int id;
+    private String username;
+    private String password;
+    private TipoUsuario tipo;
+    private String email;
+    private String telefono;
+    private double calificacionPromedio;
+    private List<String> habilidades;
+
+    public Usuario(String username, String password, TipoUsuario tipo, String email, String telefono) {
+        this.id = nextId++;
+        this.username = username;
+        this.password = password;
+        this.tipo = tipo;
+        this.email = email;
+        this.telefono = telefono;
+        this.calificacionPromedio = 0.0;
+        this.habilidades = new ArrayList<>();
+    }
+
+    // Getters y setters
+    public int getId() { 
+        return id; 
+    }
+    public String getUsername() { 
+        return username; 
+    }
+    public String getPassword() { 
+        return password;
+    }
+    public TipoUsuario getTipo() {
+        return tipo; 
+    }
+    public String getEmail() {
+        return email;
+    }
+    public String getTelefono() { 
+        return telefono;
+    }
+    public double getCalificacionPromedio() { 
+        return calificacionPromedio; 
+    }
+    public List<String> getHabilidades() {
+        return habilidades; 
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+    public void setEmail(String email) {
+        this.email = email; 
+    }
+    public void setTelefono(String telefono) { 
+        this.telefono = telefono; 
+    }
+    public void setCalificacionPromedio(double calificacion) {
+        this.calificacionPromedio = calificacion;
+    }
+    public void agregarHabilidad(String habilidad) {
+        this.habilidades.add(habilidad);
+    }
+}
+
+class Servicio {
+    private static int nextId = 1;
+    private int id;
+    private String titulo;
+    private String descripcion;
+    private String categoria;
+    private double tarifaHora;
+    private Usuario profesional;
+    private List<Postulacion> postulaciones;
+    private boolean cerrado;
+
+    public Servicio(String titulo, String descripcion, String categoria, double tarifaHora, Usuario profesional) {
+        this.id = nextId++;
+        this.titulo = titulo;
+        this.descripcion = descripcion;
+        this.categoria = categoria;
+        this.tarifaHora = tarifaHora;
+        this.profesional = profesional;
+        this.postulaciones = new ArrayList<>();
+        this.cerrado = false;
+    }
+
+    // Getters y setters
+    public int getId() { 
+        return id;
+    }
+    public String getTitulo() { 
+        return titulo; 
+    }
+    public String getDescripcion() {
+        return descripcion;
+    }
+    public String getCategoria() { 
+        return categoria; 
+    }
+    public double getTarifaHora() { 
+        return tarifaHora; 
+    }
+    public Usuario getProfesional() {
+        return profesional;
+    }
+    public List<Postulacion> getPostulaciones() { 
+        return postulaciones; 
+    }
+    public boolean isCerrado() { 
+        return cerrado; 
+    }
+
+    public void agregarPostulacion(Postulacion postulacion) {
+        this.postulaciones.add(postulacion); 
+    }
+    public void cerrarServicio() { 
+        this.cerrado = true; 
+    }
+}
+
+class Postulacion {
+    private Usuario cliente;
+    private Servicio servicio;
+    private String mensaje;
+    private int horasEstimadas;
+    private String estado; 
+    private LocalDateTime fecha;
+
+    public Postulacion(Usuario cliente, Servicio servicio, String mensaje, int horasEstimadas) {
+        this.cliente = cliente;
+        this.servicio = servicio;
+        this.mensaje = mensaje;
+        this.horasEstimadas = horasEstimadas;
+        this.estado = "Pendiente";
+        this.fecha = LocalDateTime.now();
+    }
+
+    
+    public Usuario getCliente() {
+        return cliente; 
+    }
+    public Servicio getServicio() {
+        return servicio; 
+    }
+    public String getMensaje() { 
+        return mensaje; 
+    }
+    public int getHorasEstimadas() {
+        return horasEstimadas;
+    }
+    public String getEstado() {
+        return estado;
+    }
+    public LocalDateTime getFecha() { 
+        return fecha; 
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado; 
+    }
+}
+
+class Contrato {
+    private Servicio servicio;
+    private Usuario cliente;
+    private Usuario profesional;
+    private double precioAcordado;
+    private String estado; 
+    private int calificacionProfesional; 
+    private String comentarioProfesional;
+    private int calificacionCliente; 
+    private String comentarioCliente;
+    private LocalDateTime fechaInicio;
+    private LocalDateTime fechaFin;
+
+    public Contrato(Servicio servicio, Usuario cliente, Usuario profesional, double precioAcordado) {
+        this.servicio = servicio;
+        this.cliente = cliente;
+        this.profesional = profesional;
+        this.precioAcordado = precioAcordado;
+        this.estado = "En progreso";
+        this.calificacionProfesional = 0;
+        this.comentarioProfesional = "";
+        this.calificacionCliente = 0;
+        this.comentarioCliente = "";
+        this.fechaInicio = LocalDateTime.now();
+    }
+
+    
+    public Servicio getServicio() { 
+        return servicio; 
+    }
+    public Usuario getCliente() {
+        return cliente; 
+    }
+    public Usuario getProfesional() {
+        return profesional;
+    }
+    public double getPrecioAcordado() { 
+        return precioAcordado; 
+    }
+    public String getEstado() {
+        return estado; 
+    }
+    public int getCalificacionProfesional() {
+        return calificacionProfesional; 
+    }
+    public String getComentarioProfesional() {
+        return comentarioProfesional;
+    }
+    public int getCalificacionCliente() { 
+        return calificacionCliente;
+    }
+    public String getComentarioCliente() { 
+        return comentarioCliente; 
+    }
+    public LocalDateTime getFechaInicio() {
+        return fechaInicio;
+    }
+    public LocalDateTime getFechaFin() { 
+        return fechaFin; 
+    }
+
+    public void setEstado(String estado) { 
+        this.estado = estado; 
+    }
+    public void setCalificacionProfesional(int calificacionProfesional) {
+        this.calificacionProfesional = calificacionProfesional;
+    }
+    public void setComentarioProfesional(String comentarioProfesional) { 
+        this.comentarioProfesional = comentarioProfesional;
+    }
+    public void setCalificacionCliente(int calificacionCliente) {
+        this.calificacionCliente = calificacionCliente;
+    }
+    public void setComentarioCliente(String comentarioCliente) { 
+        this.comentarioCliente = comentarioCliente; 
+    }
+    public void finalizarContrato() { 
+        this.estado = "Completado";
+        this.fechaFin = LocalDateTime.now();
+    }
+}
